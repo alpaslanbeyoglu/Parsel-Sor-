@@ -1,0 +1,6 @@
+{
+  "name": "TKGM Parsel Pro - Müteahhit & CBS Analiz Sistemi",
+  "description": "İstanbul öncelikli, mobil odaklı TKGM Ada/Parsel sorgulama, Leaflet GeoJSON harita, müteahhit imar emsal/maliyet hesaplama, parsel birleştirme (tevhit) ve yatırım fizibilite platformu.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
