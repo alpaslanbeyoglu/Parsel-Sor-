@@ -139,7 +139,7 @@ export const ParcelMap: React.FC<ParcelMapProps> = ({
     }
   }, []);
 
-  // Initialize Map
+  // Initialize Map safely (only once on mount)
   useEffect(() => {
     if (!mapContainerRef.current) return;
     if (mapInstanceRef.current) {
@@ -147,14 +147,25 @@ export const ParcelMap: React.FC<ParcelMapProps> = ({
       return;
     }
 
-    const map = L.map(mapContainerRef.current, {
-      center: [41.015, 28.96],
-      zoom: 13,
-      zoomControl: false,
-      attributionControl: true,
-    });
+    // Clean any prior Leaflet ID in DOM to prevent "Map container is already initialized"
+    if ((mapContainerRef.current as any)._leaflet_id) {
+      delete (mapContainerRef.current as any)._leaflet_id;
+    }
 
-    const initialTile = TILE_LAYERS[baseLayer];
+    let map: L.Map;
+    try {
+      map = L.map(mapContainerRef.current, {
+        center: [41.015, 28.96],
+        zoom: 13,
+        zoomControl: false,
+        attributionControl: true,
+      });
+    } catch (err) {
+      console.error('Leaflet container initialization error caught:', err);
+      return;
+    }
+
+    const initialTile = TILE_LAYERS[baseLayer] || TILE_LAYERS.osm;
     const tl = L.tileLayer(initialTile.url, {
       attribution: initialTile.attribution,
       maxZoom: initialTile.maxZoom,
@@ -181,8 +192,10 @@ export const ParcelMap: React.FC<ParcelMapProps> = ({
       const lng = e.latlng.lng;
 
       // Add temporary visual ripple marker
-      if (clickMarkerRef.current) {
-        map.removeLayer(clickMarkerRef.current);
+      if (clickMarkerRef.current && mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.removeLayer(clickMarkerRef.current);
+        } catch {}
       }
       const rippleIcon = L.divIcon({
         className: 'custom-ripple-icon',
@@ -210,27 +223,38 @@ export const ParcelMap: React.FC<ParcelMapProps> = ({
     });
     resizeObserver.observe(mapContainerRef.current);
 
-    window.addEventListener('resize', invalidateSize);
+    const handleWindowResize = () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    };
+    window.addEventListener('resize', handleWindowResize);
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
       resizeObserver.disconnect();
-      window.removeEventListener('resize', invalidateSize);
-      map.remove();
-      mapInstanceRef.current = null;
+      window.removeEventListener('resize', handleWindowResize);
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch {}
+        mapInstanceRef.current = null;
+      }
     };
-  }, [baseLayer, invalidateSize]);
+  }, []); // Run once on mount!
 
   // Base Layer Switch
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
     if (tileLayerRef.current) {
-      map.removeLayer(tileLayerRef.current);
+      try {
+        map.removeLayer(tileLayerRef.current);
+      } catch {}
     }
-    const cfg = TILE_LAYERS[baseLayer];
+    const cfg = TILE_LAYERS[baseLayer] || TILE_LAYERS.osm;
     tileLayerRef.current = L.tileLayer(cfg.url, {
       attribution: cfg.attribution,
       maxZoom: cfg.maxZoom,
@@ -250,105 +274,121 @@ export const ParcelMap: React.FC<ParcelMapProps> = ({
     const group = activeLayerGroupRef.current;
     if (!map || !group) return;
 
-    group.clearLayers();
-    if (!activeParcel) return;
+    try {
+      group.clearLayers();
+    } catch {}
+
+    if (!activeParcel || !activeParcel.geometry) return;
 
     // Remove temporary click marker once parcel is drawn
     if (clickMarkerRef.current) {
-      map.removeLayer(clickMarkerRef.current);
+      try {
+        map.removeLayer(clickMarkerRef.current);
+      } catch {}
       clickMarkerRef.current = null;
     }
 
-    const geoJsonLayer = L.geoJSON(activeParcel, {
-      style: {
-        color: '#0284c7',
-        weight: 3.5,
-        opacity: 1,
-        fillColor: '#38bdf8',
-        fillOpacity: 0.38,
-      },
-    });
-
-    const props = activeParcel.properties;
-    const popupHtml = `
-      <div class="p-3.5 text-slate-900 font-sans">
-        <div class="text-[11px] font-bold uppercase tracking-wider text-blue-600 mb-1">
-          ${props.ilAd} · ${props.ilceAd} · ${props.mahalleAd}
-        </div>
-        <div class="text-base font-extrabold font-mono text-slate-900 mb-2 flex items-center justify-between">
-          <span>Ada ${props.adaNo} / Parsel ${props.parselNo}</span>
-          <span class="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-sans">${props.nitelik || 'Arsa'}</span>
-        </div>
-        <div class="grid grid-cols-2 gap-2 pt-2 pb-2 border-t border-slate-200 text-xs">
-          <div>
-            <span class="text-slate-500 block text-[10px] font-medium">Tapu Alanı</span>
-            <span class="font-mono font-bold text-slate-950 text-sm">${props.alanFormatted}</span>
-          </div>
-          <div>
-            <span class="text-slate-500 block text-[10px] font-medium">Çevre Uzunluğu</span>
-            <span class="font-mono font-semibold text-slate-800 text-xs">${props.cevreUzunlugu ? `${props.cevreUzunlugu.toFixed(1)} m` : '-'}</span>
-          </div>
-          <div>
-            <span class="text-slate-500 block text-[10px] font-medium">Zemin Sınıfı</span>
-            <span class="font-semibold text-amber-600 text-xs">${props.jeoteknik?.zeminSinifi ? props.jeoteknik.zeminSinifi.split(' ')[0] : 'ZC'}</span>
-          </div>
-          <div>
-            <span class="text-slate-500 block text-[10px] font-medium">Deprem PGA</span>
-            <span class="font-mono font-semibold text-rose-600 text-xs">${props.jeoteknik?.pgaIvm || '0.40g'}</span>
-          </div>
-        </div>
-        <div class="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
-          <span>Koordinat: ${props.merkezEnlem.toFixed(4)}, ${props.merkezBoylam.toFixed(4)}</span>
-          ${props.kaynak === 'TKGM-IBB-Canli' ? '<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Canlı CBS</span>' : ''}
-        </div>
-        <div class="mt-2 pt-2 border-t border-slate-200 grid grid-cols-3 gap-1 text-center text-[10px] font-bold">
-          <a href="${props.tkgmUrl || `https://parselsorgu.tkgm.gov.tr/#ara/cografi/${props.merkezEnlem}/${props.merkezBoylam}`}" target="_blank" rel="noopener noreferrer" class="py-1 px-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors">TKGM ↗</a>
-          <a href="${props.kentRehberiUrl || `https://harita.istanbul/?c=${props.merkezBoylam},${props.merkezEnlem}&z=19`}" target="_blank" rel="noopener noreferrer" class="py-1 px-1 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded transition-colors">Kent Rehberi ↗</a>
-          <a href="${props.eplanUrl || 'https://planaski.ibb.gov.tr/'}" target="_blank" rel="noopener noreferrer" class="py-1 px-1 bg-amber-50 text-amber-800 hover:bg-amber-100 rounded transition-colors">E-Plan ↗</a>
-        </div>
-      </div>
-    `;
-
-    geoJsonLayer.bindPopup(popupHtml);
-    geoJsonLayer.addTo(group);
-
-    // Center Label Marker
-    const centerIcon = L.divIcon({
-      className: 'custom-parcel-center',
-      html: `<div class="tkgm-parcel-center-label">
-        <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
-        <span>Ada ${props.adaNo} / Parsel ${props.parselNo} · ${props.alanFormatted}</span>
-      </div>`,
-      iconSize: [180, 28],
-      iconAnchor: [90, 14],
-    });
-    L.marker([props.merkezEnlem, props.merkezBoylam], {
-      icon: centerIcon,
-      interactive: false,
-    }).addTo(group);
-
-    // Vertex Markers (K1..Kn)
-    if (showVertices && props.koseKoordinatlari?.length) {
-      props.koseKoordinatlari.forEach((pt) => {
-        const vm = L.circleMarker([pt.lat, pt.lng], {
-          radius: 5,
-          color: '#0f172a',
-          weight: 2,
-          fillColor: '#facc15',
-          fillOpacity: 1,
-        });
-        vm.bindTooltip(`K${pt.no}: ${pt.lat.toFixed(5)}, ${pt.lng.toFixed(5)}`, {
-          direction: 'top',
-          className: 'tkgm-vertex-label',
-        });
-        vm.addTo(group);
+    try {
+      const geoJsonLayer = L.geoJSON(activeParcel, {
+        style: {
+          color: '#0284c7',
+          weight: 3.5,
+          opacity: 1,
+          fillColor: '#38bdf8',
+          fillOpacity: 0.38,
+        },
       });
-    }
 
-    // Zoom into parcel bounds
-    const bounds = geoJsonLayer.getBounds();
-    if (bounds.isValid()) {
-      map.flyToBounds(bounds, { padding: [60, 60], maxZoom: 18, duration: 0.8 });
+      const props = activeParcel.properties || ({} as any);
+      const mLat = Number(props.merkezEnlem) || 41.0082;
+      const mLng = Number(props.merkezBoylam) || 28.9784;
+
+      const popupHtml = `
+        <div class="p-3.5 text-slate-900 font-sans">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-blue-600 mb-1">
+            ${props.ilAd || 'İSTANBUL'} · ${props.ilceAd || ''} · ${props.mahalleAd || ''}
+          </div>
+          <div class="text-base font-extrabold font-mono text-slate-900 mb-2 flex items-center justify-between">
+            <span>Ada ${props.adaNo || '-'} / Parsel ${props.parselNo || '-'}</span>
+            <span class="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-sans">${props.nitelik || 'Arsa'}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-2 pb-2 border-t border-slate-200 text-xs">
+            <div>
+              <span class="text-slate-500 block text-[10px] font-medium">Tapu Alanı</span>
+              <span class="font-mono font-bold text-slate-950 text-sm">${props.alanFormatted || '-'}</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px] font-medium">Çevre Uzunluğu</span>
+              <span class="font-mono font-semibold text-slate-800 text-xs">${props.cevreUzunlugu ? `${Number(props.cevreUzunlugu).toFixed(1)} m` : '-'}</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px] font-medium">Zemin Sınıfı</span>
+              <span class="font-semibold text-amber-600 text-xs">${props.jeoteknik?.zeminSinifi ? props.jeoteknik.zeminSinifi.split(' ')[0] : 'ZC'}</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px] font-medium">Deprem PGA</span>
+              <span class="font-mono font-semibold text-rose-600 text-xs">${props.jeoteknik?.pgaIvm || '0.40g'}</span>
+            </div>
+          </div>
+          <div class="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Koordinat: ${mLat.toFixed(4)}, ${mLng.toFixed(4)}</span>
+            ${props.kaynak === 'TKGM-IBB-Canli' ? '<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Canlı CBS</span>' : ''}
+          </div>
+          <div class="mt-2 pt-2 border-t border-slate-200 grid grid-cols-3 gap-1 text-center text-[10px] font-bold">
+            <a href="${props.tkgmUrl || `https://parselsorgu.tkgm.gov.tr/#ara/cografi/${mLat}/${mLng}`}" target="_blank" rel="noopener noreferrer" class="py-1 px-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors">TKGM ↗</a>
+            <a href="${props.kentRehberiUrl || `https://harita.istanbul/?c=${mLng},${mLat}&z=19`}" target="_blank" rel="noopener noreferrer" class="py-1 px-1 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded transition-colors">Kent Rehberi ↗</a>
+            <a href="${props.eplanUrl || 'https://planaski.ibb.gov.tr/'}" target="_blank" rel="noopener noreferrer" class="py-1 px-1 bg-amber-50 text-amber-800 hover:bg-amber-100 rounded transition-colors">E-Plan ↗</a>
+          </div>
+        </div>
+      `;
+
+      geoJsonLayer.bindPopup(popupHtml);
+      geoJsonLayer.addTo(group);
+
+      // Center Label Marker
+      const centerIcon = L.divIcon({
+        className: 'custom-parcel-center',
+        html: `<div class="tkgm-parcel-center-label">
+          <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+          <span>Ada ${props.adaNo || '-'} / Parsel ${props.parselNo || '-'} · ${props.alanFormatted || ''}</span>
+        </div>`,
+        iconSize: [180, 28],
+        iconAnchor: [90, 14],
+      });
+      L.marker([mLat, mLng], {
+        icon: centerIcon,
+        interactive: false,
+      }).addTo(group);
+
+      // Vertex Markers (K1..Kn)
+      const vertices = Array.isArray(props.koseKoordinatlari) ? props.koseKoordinatlari : [];
+      if (showVertices && vertices.length > 0) {
+        vertices.forEach((pt) => {
+          const pLat = Number(pt.lat);
+          const pLng = Number(pt.lng);
+          if (isNaN(pLat) || isNaN(pLng)) return;
+          const vm = L.circleMarker([pLat, pLng], {
+            radius: 5,
+            color: '#0f172a',
+            weight: 2,
+            fillColor: '#facc15',
+            fillOpacity: 1,
+          });
+          vm.bindTooltip(`K${pt.no}: ${pLat.toFixed(5)}, ${pLng.toFixed(5)}`, {
+            direction: 'top',
+            className: 'tkgm-vertex-label',
+          });
+          vm.addTo(group);
+        });
+      }
+
+      // Zoom into parcel bounds
+      const bounds = geoJsonLayer.getBounds();
+      if (bounds && typeof bounds.isValid === 'function' && bounds.isValid()) {
+        map.flyToBounds(bounds, { padding: [60, 60], maxZoom: 18, duration: 0.8 });
+      }
+    } catch (renderErr) {
+      console.warn('Parcel polygon render error caught:', renderErr);
     }
   }, [activeParcel, showVertices]);
 
@@ -356,26 +396,34 @@ export const ParcelMap: React.FC<ParcelMapProps> = ({
   useEffect(() => {
     const group = savedLayerGroupRef.current;
     if (!group) return;
-    group.clearLayers();
+    try {
+      group.clearLayers();
+    } catch {}
     if (!showAllSavedOnMap) return;
 
     savedParcels.forEach((item) => {
-      if (activeParcel && item.feature.properties.id === activeParcel.properties.id) return;
-      const layer = L.geoJSON(item.feature, {
-        style: {
-          color: item.isFavorite ? '#f59e0b' : '#64748b',
-          weight: 2,
-          dashArray: '4 4',
-          fillColor: item.isFavorite ? '#f59e0b' : '#475569',
-          fillOpacity: 0.22,
-        },
-      });
-      layer.on('click', () => onSelectSavedParcel(item.feature));
-      layer.bindTooltip(
-        `${item.feature.properties.mahalleAd} Ada ${item.feature.properties.adaNo} / Parsel ${item.feature.properties.parselNo} (${item.feature.properties.alanFormatted})`,
-        { direction: 'top' }
-      );
-      layer.addTo(group);
+      try {
+        if (!item || !item.feature || !item.feature.geometry) return;
+        if (activeParcel && item.feature.properties?.id === activeParcel.properties?.id) return;
+        const layer = L.geoJSON(item.feature, {
+          style: {
+            color: item.isFavorite ? '#f59e0b' : '#64748b',
+            weight: 2,
+            dashArray: '4 4',
+            fillColor: item.isFavorite ? '#f59e0b' : '#475569',
+            fillOpacity: 0.22,
+          },
+        });
+        layer.on('click', () => onSelectSavedParcel(item.feature));
+        const p = item.feature.properties || {};
+        layer.bindTooltip(
+          `${p.mahalleAd || ''} Ada ${p.adaNo || ''} / Parsel ${p.parselNo || ''} (${p.alanFormatted || ''})`,
+          { direction: 'top' }
+        );
+        layer.addTo(group);
+      } catch (e) {
+        console.warn('Saved parcel map layer render error:', e);
+      }
     });
   }, [savedParcels, showAllSavedOnMap, activeParcel, onSelectSavedParcel]);
 

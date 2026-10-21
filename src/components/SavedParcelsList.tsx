@@ -33,15 +33,17 @@ export const SavedParcelsList: React.FC<SavedParcelsListProps> = ({
     .filter((item) => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
-      const p = item.feature.properties;
+      const p = item.feature?.properties;
+      if (!p) return false;
+      const note = item.customNote || '';
       return (
-        p.ilAd.toLowerCase().includes(q) ||
-        p.ilceAd.toLowerCase().includes(q) ||
-        p.mahalleAd.toLowerCase().includes(q) ||
-        p.adaNo.toLowerCase().includes(q) ||
-        p.parselNo.toLowerCase().includes(q) ||
-        p.nitelik.toLowerCase().includes(q) ||
-        (item.customNote && item.customNote.toLowerCase().includes(q))
+        String(p.ilAd || '').toLowerCase().includes(q) ||
+        String(p.ilceAd || '').toLowerCase().includes(q) ||
+        String(p.mahalleAd || '').toLowerCase().includes(q) ||
+        String(p.adaNo || '').toLowerCase().includes(q) ||
+        String(p.parselNo || '').toLowerCase().includes(q) ||
+        String(p.nitelik || '').toLowerCase().includes(q) ||
+        note.toLowerCase().includes(q)
       );
     });
 

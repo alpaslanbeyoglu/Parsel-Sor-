@@ -63,9 +63,13 @@ export const ParcelDetailsPanel: React.FC<ParcelDetailsPanelProps> = ({
   const p = parcel.properties;
   const geo = p.jeoteknik;
   const isLive = p.kaynak === 'TKGM-IBB-Canli';
+  const koseList = Array.isArray(p.koseKoordinatlari) ? p.koseKoordinatlari : [];
+
+  const centerLat = Number(p.merkezEnlem) || 41.0082;
+  const centerLng = Number(p.merkezBoylam) || 28.9784;
 
   const handleCopyCoordinates = () => {
-    const text = `${p.merkezEnlem.toFixed(6)}, ${p.merkezBoylam.toFixed(6)}`;
+    const text = `${centerLat.toFixed(6)}, ${centerLng.toFixed(6)}`;
     navigator.clipboard?.writeText(text);
     setCopiedCoord(true);
     onNotify('info', 'Koordinat Kopyalandı', `WGS84 Merkez: ${text} panoya kopyalandı.`);
@@ -230,7 +234,7 @@ export const ParcelDetailsPanel: React.FC<ParcelDetailsPanelProps> = ({
           }`}
         >
           <Table className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Köşeler ({p.koseKoordinatlari.length})</span>
+          <span>Köşeler ({koseList.length})</span>
         </button>
         <button
           type="button"
@@ -405,29 +409,35 @@ export const ParcelDetailsPanel: React.FC<ParcelDetailsPanelProps> = ({
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-700">Resmi Kadastral Köşe Kırık Noktaları</span>
             <span className="font-mono text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-md">
-              {p.koseKoordinatlari.length} Köşe Noktası
+              {koseList.length} Köşe Noktası
             </span>
           </div>
 
           <div className="border border-slate-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-100 border-b border-slate-200 text-slate-700 font-semibold">
-                  <th className="py-2 px-3">Nokta</th>
-                  <th className="py-2 px-3 text-right">Enlem (WGS84 Lat)</th>
-                  <th className="py-2 px-3 text-right">Boylam (WGS84 Lng)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-mono tabular-nums">
-                {p.koseKoordinatlari.map((pt) => (
-                  <tr key={pt.no} className="hover:bg-slate-50">
-                    <td className="py-1.5 px-3 font-bold text-blue-700">K{pt.no}</td>
-                    <td className="py-1.5 px-3 text-right text-slate-800">{pt.lat.toFixed(6)}</td>
-                    <td className="py-1.5 px-3 text-right text-slate-800">{pt.lng.toFixed(6)}</td>
+            {koseList.length === 0 ? (
+              <div className="p-4 text-center text-xs text-slate-500">
+                Köşe koordinatları hesaplanıyor veya mevcut değil.
+              </div>
+            ) : (
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-slate-200 text-slate-700 font-semibold">
+                    <th className="py-2 px-3">Nokta</th>
+                    <th className="py-2 px-3 text-right">Enlem (WGS84 Lat)</th>
+                    <th className="py-2 px-3 text-right">Boylam (WGS84 Lng)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-mono tabular-nums">
+                  {koseList.map((pt) => (
+                    <tr key={pt.no} className="hover:bg-slate-50">
+                      <td className="py-1.5 px-3 font-bold text-blue-700">K{pt.no}</td>
+                      <td className="py-1.5 px-3 text-right text-slate-800">{(Number(pt.lat) || 0).toFixed(6)}</td>
+                      <td className="py-1.5 px-3 text-right text-slate-800">{(Number(pt.lng) || 0).toFixed(6)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}

@@ -312,7 +312,9 @@ async function queryLiveIbbParcelByCoordinate(lat: number, lng: number) {
   if (!token) return null;
 
   try {
-    const url = `${cachedParselServiceUrl}&geometry=${lng.toFixed(6)},${lat.toFixed(6)}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*`;
+    const delta = 0.00015;
+    const env = `${(lng - delta).toFixed(6)},${(lat - delta).toFixed(6)},${(lng + delta).toFixed(6)},${(lat + delta).toFixed(6)}`;
+    const url = `${cachedParselServiceUrl}&geometry=${env}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*`;
     const res = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',

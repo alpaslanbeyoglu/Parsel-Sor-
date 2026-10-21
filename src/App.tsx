@@ -220,7 +220,7 @@ export function App() {
       .then((list) => {
         if (!active) return;
         setIlceler(list);
-        if (list.length > 0 && !list.some((c) => c.id === selectedIlceId)) {
+        if (list.length > 0) {
           setSelectedIlceId(list[0].id);
         }
       })
@@ -230,7 +230,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [selectedIlId, selectedIlceId]);
+  }, [selectedIlId]);
 
   // Load Neighborhoods when selected district changes
   useEffect(() => {
@@ -240,7 +240,7 @@ export function App() {
       .then((list) => {
         if (!active) return;
         setMahalleler(list);
-        if (list.length > 0 && !list.some((m) => m.id === selectedMahalleId)) {
+        if (list.length > 0) {
           setSelectedMahalleId(list[0].id);
         }
       })
@@ -250,7 +250,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [selectedIlceId, selectedMahalleId]);
+  }, [selectedIlceId]);
 
   const handleAdministrativeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
