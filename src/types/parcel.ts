@@ -8,6 +8,18 @@ export interface AdminUnit {
   zoom?: number;
   parentId?: number;
   isIstanbul?: boolean;
+  yaka?: 'Avrupa' | 'Anadolu' | 'Diger';
+}
+
+export interface GeotechnicalInfo {
+  zeminSinifi: 'ZA (Sağlam Kaya)' | 'ZB (Sağlam Kaya)' | 'ZC (Orta Sıkı Zemin)' | 'ZD (Orta Yumuşak / Alüvyon)' | 'ZE (Yumuşak Zemin / Dolgu)';
+  depremBolgesi: string;
+  pgaIvm: string; // e.g. 0.42g
+  sivilasmaRiski: 'Düşük' | 'Orta' | 'Yüksek';
+  zeminEmniyetGerilmesi: string; // e.g. 2.0 kg/cm²
+  temelOnerisi: string;
+  tavsiyeEdilenIyilestirme: string;
+  riskSkoru: number; // 0 - 100
 }
 
 export interface ParcelProperties {
@@ -31,8 +43,14 @@ export interface ParcelProperties {
   merkezEnlem: number;
   merkezBoylam: number;
   sorguTarihi: string;
-  kaynak: 'TKGM-Canli' | 'TKGM-CBS-Simulasyon';
+  kaynak: 'TKGM-IBB-Canli' | 'TKGM-Canli' | 'TKGM-CBS-Simulasyon';
   koseKoordinatlari: Array<{ no: number; lat: number; lng: number }>;
+  jeoteknik?: GeotechnicalInfo;
+  megsisId?: number | string;
+  takbisId?: number | string;
+  tkgmUrl?: string;
+  kentRehberiUrl?: string;
+  eplanUrl?: string;
 }
 
 export type ParcelFeature = Feature<Polygon | MultiPolygon, ParcelProperties>;
@@ -42,9 +60,8 @@ export interface ContractorParams {
   taks: number; // e.g. 0.3, 0.4
   katAdeti: number; // e.g. 5, 8
   ortalamaDaireM2: number; // e.g. 100 m² net
-  insaatBirimMaliyetTL: number; // e.g. 22000 TL/m²
-  ortalamaSatisM2TL: number; // e.g. 55000 TL/m²
-  arsaMaliyetiTL?: number;
+  insaatBirimMaliyetTL: number; // e.g. 24000 TL/m²
+  ortalamaSatisM2TL: number; // e.g. 65000 TL/m²
 }
 
 export interface SavedParcelItem {

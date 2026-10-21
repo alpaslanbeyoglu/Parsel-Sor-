@@ -14,6 +14,10 @@ import {
   Building2,
   MapPin,
   Sparkles,
+  FileText,
+  Maximize2,
+  Minimize2,
+  Layers,
 } from 'lucide-react';
 import type {
   AdminUnit,
@@ -40,68 +44,70 @@ import { ContractorCalculatorModal } from './components/ContractorCalculatorModa
 const ISTANBUL_CONTRACTOR_PRESETS = [
   {
     label: 'Kadıköy · Caferağa (Moda)',
-    ilId: 34,
-    ilceId: 3401,
-    mahalleId: 340101,
+    ilId: 342,
+    ilceId: 34205,
+    mahalleId: 3420501,
     ada: '124',
     parsel: '8',
     note: 'Bağdat Caddesi/Moda aksı, kentsel dönüşüm potansiyeli yüksek',
   },
   {
     label: 'Beşiktaş · Levent',
-    ilId: 34,
-    ilceId: 3402,
-    mahalleId: 340201,
+    ilId: 341,
+    ilceId: 34108,
+    mahalleId: 3410801,
     ada: '412',
     parsel: '14',
     note: 'Ticari ve prestijli rezidans imarlı arsa',
   },
   {
-    label: 'Şişli · Teşvikiye',
-    ilId: 34,
-    ilceId: 3403,
-    mahalleId: 340301,
+    label: 'Fatih · Haseki Sultan',
+    ilId: 341,
+    ilceId: 34116,
+    mahalleId: 3411601,
     ada: '89',
     parsel: '3',
-    note: 'Nişantaşı çeperi, kat karşılığı yüksek değerli parsel',
+    note: 'Tarihi yarımada, butik konut/turizm imarlı parsel',
   },
   {
-    label: 'Bakırköy · Ataköy',
-    ilId: 34,
-    ilceId: 3406,
-    mahalleId: 340601,
-    ada: '512',
-    parsel: '22',
-    note: 'Sahil hattı lüks konut proje sahası',
+    label: 'Şişli · Teşvikiye',
+    ilId: 341,
+    ilceId: 34124,
+    mahalleId: 3412401,
+    ada: '154',
+    parsel: '6',
+    note: 'Nişantaşı çeperi, kat karşılığı yüksek değerli arsa',
   },
 ];
 
 export function App() {
-  const [sidebarTab, setSidebarTab] = useState<'sorgu' | 'favoriler' | 'gecmis'>('sorgu');
+  // Mobile / Responsive Navigation State
+  const [activeTab, setActiveTab] = useState<'sorgu' | 'detay' | 'favoriler' | 'gecmis'>('sorgu');
+  const [fullScreenMobileMap, setFullScreenMobileMap] = useState<boolean>(false);
   const [inquiryMode, setInquiryMode] = useState<'idari' | 'koordinat'>('idari');
   const [showArchitectureModal, setShowArchitectureModal] = useState<boolean>(false);
   const [showContractorModal, setShowContractorModal] = useState<boolean>(false);
 
-  // Admin Hierarchy State
+  // Admin Hierarchy State (Istanbul European side default)
   const [iller, setIller] = useState<AdminUnit[]>([]);
   const [ilceler, setIlceler] = useState<AdminUnit[]>([]);
   const [mahalleler, setMahalleler] = useState<AdminUnit[]>([]);
 
-  const [selectedIlId, setSelectedIlId] = useState<number>(34); // Istanbul default
-  const [selectedIlceId, setSelectedIlceId] = useState<number>(3401); // Kadıköy default
-  const [selectedMahalleId, setSelectedMahalleId] = useState<number>(340101); // Caferağa default
-  const [adaNo, setAdaNo] = useState<string>('124');
-  const [parselNo, setParselNo] = useState<string>('8');
+  const [selectedIlId, setSelectedIlId] = useState<number>(341); // Istanbul Avrupa default
+  const [selectedIlceId, setSelectedIlceId] = useState<number>(34116); // Fatih default
+  const [selectedMahalleId, setSelectedMahalleId] = useState<number>(3411601); // Haseki Sultan default
+  const [adaNo, setAdaNo] = useState<string>('89');
+  const [parselNo, setParselNo] = useState<string>('3');
 
   // Coordinate inputs
-  const [latInput, setLatInput] = useState<string>('40.985200');
-  const [lngInput, setLngInput] = useState<string>('29.026800');
+  const [latInput, setLatInput] = useState<string>('41.009200');
+  const [lngInput, setLngInput] = useState<string>('28.948100');
 
   // Map & Parcel Data State
   const [activeParcel, setActiveParcel] = useState<ParcelFeature | null>(null);
   const [savedParcels, setSavedParcels] = useState<SavedParcelItem[]>([]);
   const [showAllSavedOnMap, setShowAllSavedOnMap] = useState<boolean>(true);
-  const [mapClickMode, setMapClickMode] = useState<boolean>(false);
+  const [mapClickMode, setMapClickMode] = useState<boolean>(true);
   const [flyToCenter, setFlyToCenter] = useState<{ lat: number; lng: number; zoom: number } | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -148,7 +154,7 @@ export function App() {
     []
   );
 
-  // Initialize
+  // Initialize data and load initial parcel for immediate map visualization
   useEffect(() => {
     let mounted = true;
     async function init() {
@@ -163,36 +169,40 @@ export function App() {
           setActiveParcel(existing[0].feature);
         } else {
           setIsLoading(true);
-          const seeded: SavedParcelItem[] = [];
-          for (let i = 0; i < ISTANBUL_CONTRACTOR_PRESETS.length; i++) {
-            const preset = ISTANBUL_CONTRACTOR_PRESETS[i];
-            const feat = await queryParcelByAdaParsel(preset.mahalleId, preset.ada, preset.parsel);
-            seeded.push({
-              id: feat.properties.id,
-              savedAt: new Date(Date.now() - i * 3600_000).toISOString(),
-              isFavorite: i < 2,
-              customNote: preset.note,
-              contractorParams: {
-                emsal: 2.07,
-                taks: 0.30,
-                katAdeti: 6,
-                ortalamaDaireM2: 105,
-                insaatBirimMaliyetTL: 24000,
-                ortalamaSatisM2TL: 65000,
+          // Query preset immediately so map is never blank
+          try {
+            const firstPreset = ISTANBUL_CONTRACTOR_PRESETS[0];
+            const feat = await queryParcelByAdaParsel(firstPreset.mahalleId, firstPreset.ada, firstPreset.parsel);
+            if (!mounted) return;
+            const seeded: SavedParcelItem[] = [
+              {
+                id: feat.properties.id,
+                savedAt: new Date().toISOString(),
+                isFavorite: true,
+                customNote: firstPreset.note,
+                contractorParams: {
+                  emsal: 2.07,
+                  taks: 0.30,
+                  katAdeti: 6,
+                  ortalamaDaireM2: 105,
+                  insaatBirimMaliyetTL: 24000,
+                  ortalamaSatisM2TL: 65000,
+                },
+                feature: feat,
               },
-              feature: feat,
-            });
+            ];
+            setSavedParcels(seeded);
+            saveParcelsToStorage(seeded);
+            setActiveParcel(feat);
+          } catch (seedErr) {
+            console.warn('Initial seed parcel query warning:', seedErr);
           }
-          if (!mounted) return;
-          setSavedParcels(seeded);
-          saveParcelsToStorage(seeded);
-          setActiveParcel(seeded[0].feature);
           setIsLoading(false);
         }
       } catch (err: any) {
         if (mounted) {
           setIsLoading(false);
-          addToast('error', 'Hata', err.message || 'Veriler yüklenemedi.');
+          addToast('error', 'Bağlantı Hatası', err.message || 'Veriler yüklenemedi.');
         }
       }
     }
@@ -202,7 +212,7 @@ export function App() {
     };
   }, [addToast]);
 
-  // Load Districts
+  // Load Districts when selected province changes
   useEffect(() => {
     if (!selectedIlId) return;
     let active = true;
@@ -220,9 +230,9 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [selectedIlId]);
+  }, [selectedIlId, selectedIlceId]);
 
-  // Load Neighborhoods
+  // Load Neighborhoods when selected district changes
   useEffect(() => {
     if (!selectedIlceId) return;
     let active = true;
@@ -240,7 +250,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [selectedIlceId]);
+  }, [selectedIlceId, selectedMahalleId]);
 
   const handleAdministrativeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,8 +266,8 @@ export function App() {
       recordQueriedParcel(feature);
       addToast(
         'success',
-        'Parsel Sorgulandı',
-        `${feature.properties.mahalleAd} Ada ${feature.properties.adaNo} / Parsel ${feature.properties.parselNo} (${feature.properties.alanFormatted}) haritada gösteriliyor.`
+        'Parsel Çizildi',
+        `${feature.properties.mahalleAd} Ada ${feature.properties.adaNo} / Parsel ${feature.properties.parselNo} haritada gösteriliyor.`
       );
     } catch (err: any) {
       addToast('error', 'Sorgulama Hatası', err.message);
@@ -277,7 +287,7 @@ export function App() {
         recordQueriedParcel(feature);
         addToast(
           'success',
-          'Koordinat Tespiti Başarılı',
+          'Haritadan Parsel Tespit Edildi',
           `${feature.properties.ilAd} / ${feature.properties.ilceAd} - Ada ${feature.properties.adaNo} / Parsel ${feature.properties.parselNo}`
         );
       } catch (err: any) {
@@ -312,60 +322,52 @@ export function App() {
       const feature = await queryParcelByAdaParsel(preset.mahalleId, preset.ada, preset.parsel);
       setActiveParcel(feature);
       recordQueriedParcel(feature, false, preset.note);
-      addToast('success', 'İstanbul Öne Çıkan Parsel', `${preset.label} yüklendi.`);
+      addToast('success', 'Bölge Yüklendi', `${preset.label} - Ada ${preset.ada} / Parsel ${preset.parsel}`);
     } catch (err: any) {
-      addToast('error', 'Hata', err.message);
+      addToast('error', 'Yükleme Hatası', err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleToggleFavorite = (feature: ParcelFeature) => {
-    const id = feature.properties.id;
     setSavedParcels((prev) => {
-      const exists = prev.find((item) => item.id === id);
-      let next: SavedParcelItem[];
-      if (exists) {
-        const nextFav = !exists.isFavorite;
-        next = prev.map((item) => (item.id === id ? { ...item, isFavorite: nextFav } : item));
-        addToast(
-          nextFav ? 'success' : 'info',
-          nextFav ? 'Favorilere Eklendi' : 'Favoriden Çıkarıldı',
-          `Ada ${feature.properties.adaNo} / Parsel ${feature.properties.parselNo}`
-        );
+      const idx = prev.findIndex((i) => i.feature.properties.id === feature.properties.id);
+      let updated: SavedParcelItem[];
+      if (idx >= 0) {
+        const current = prev[idx];
+        const nextFav = !current.isFavorite;
+        const newItem = { ...current, isFavorite: nextFav };
+        updated = [...prev.slice(0, idx), newItem, ...prev.slice(idx + 1)];
+        addToast(nextFav ? 'success' : 'info', nextFav ? 'Favorilere Eklendi' : 'Favorilerden Kaldırıldı', '');
       } else {
-        next = [
-          {
-            id,
-            savedAt: new Date().toISOString(),
-            isFavorite: true,
-            customNote: '',
-            feature,
-          },
-          ...prev,
-        ];
-        addToast('success', 'Favorilere Eklendi', `Ada ${feature.properties.adaNo} / Parsel ${feature.properties.parselNo}`);
+        const newItem: SavedParcelItem = {
+          id: feature.properties.id,
+          savedAt: new Date().toISOString(),
+          isFavorite: true,
+          feature,
+        };
+        updated = [newItem, ...prev];
+        addToast('success', 'Favorilere Eklendi', '');
       }
-      saveParcelsToStorage(next);
-      return next;
+      saveParcelsToStorage(updated);
+      return updated;
     });
   };
 
-  const handleUpdateNote = (parcelId: string, note: string) => {
+  const handleUpdateNote = (id: string, note: string) => {
     setSavedParcels((prev) => {
-      const next = prev.map((item) => (item.id === parcelId ? { ...item, customNote: note } : item));
-      saveParcelsToStorage(next);
-      return next;
+      const updated = prev.map((item) => (item.id === id ? { ...item, customNote: note } : item));
+      saveParcelsToStorage(updated);
+      return updated;
     });
+    addToast('success', 'Not Kaydedildi', 'Parsel notunuz güncellendi.');
   };
 
-  const handleSaveContractorParams = (parcelId: string, params: ContractorParams) => {
-    setSavedParcels((prev) => {
-      const next = prev.map((item) => (item.id === parcelId ? { ...item, contractorParams: params } : item));
-      saveParcelsToStorage(next);
-      return next;
-    });
-    addToast('success', 'Fizibilite Kaydedildi', 'Müteahhitlik imar ve maliyet parametreleri güncellendi.');
+  const handleSaveContractorParams = (_parcelId: string, params: ContractorParams) => {
+    if (!activeParcel) return;
+    recordQueriedParcel(activeParcel, false, undefined, params);
+    addToast('success', 'Müteahhitlik Parametreleri Kaydedildi', 'İmar emsal ve birim maliyet değerleri saklandı.');
   };
 
   const handleDeleteItem = (id: string) => {
@@ -390,140 +392,165 @@ export function App() {
   const favoriteCount = savedParcels.filter((i) => i.isFavorite).length;
 
   return (
-    <div className="min-h-screen lg:h-screen flex flex-col bg-slate-50 text-slate-900 overflow-x-hidden">
-      {/* Top Navigation Bar */}
-      <header className="flex items-center justify-between gap-6 px-4 sm:px-6 py-3.5 bg-white border-b border-slate-200 shrink-0 z-20">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
+    <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-900 overflow-hidden font-sans">
+      {/* App Navigation Header */}
+      <header className="flex items-center justify-between gap-4 px-4 sm:px-6 py-2.5 bg-slate-900 text-white border-b border-slate-800 shrink-0 z-30 shadow-md">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/20">
             <Building2 className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-sm sm:text-base font-bold tracking-tight text-slate-900">
-              TKGM Parsel Pro <span className="text-blue-600">· Müteahhit CBS</span>
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm sm:text-base font-extrabold tracking-tight text-white leading-tight">
+                TKGM Parsel Pro <span className="text-sky-400">· CBS Harita</span>
+              </h1>
+              <span className="hidden sm:inline-flex px-2 py-0.5 text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30 rounded-full">
+                Müteahhit & CBS
+              </span>
+            </div>
           </div>
         </div>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
-          <a
-            href="#sorgu"
-            onClick={(e) => {
-              e.preventDefault();
-              setSidebarTab('sorgu');
-            }}
-            className={`hover:text-slate-900 transition-colors whitespace-nowrap ${
-              sidebarTab === 'sorgu' ? 'text-blue-600 font-semibold' : ''
+        {/* Desktop Quick Nav */}
+        <nav className="hidden lg:flex items-center gap-5 text-xs font-semibold text-slate-300">
+          <button
+            type="button"
+            onClick={() => setActiveTab('sorgu')}
+            className={`transition-colors flex items-center gap-1.5 ${
+              activeTab === 'sorgu' ? 'text-sky-400 font-bold' : 'hover:text-white'
             }`}
           >
-            Parsel Sorgulama
-          </a>
-          <a
-            href="#favoriler"
-            onClick={(e) => {
-              e.preventDefault();
-              setSidebarTab('favoriler');
-            }}
-            className={`hover:text-slate-900 transition-colors whitespace-nowrap ${
-              sidebarTab === 'favoriler' ? 'text-blue-600 font-semibold' : ''
+            <Search className="w-3.5 h-3.5" />
+            <span>Ada / Parsel</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('detay')}
+            className={`transition-colors flex items-center gap-1.5 ${
+              activeTab === 'detay' ? 'text-sky-400 font-bold' : 'hover:text-white'
             }`}
           >
-            Favorilerim ({favoriteCount})
-          </a>
-          <a
-            href="#gecmis"
-            onClick={(e) => {
-              e.preventDefault();
-              setSidebarTab('gecmis');
-            }}
-            className={`hover:text-slate-900 transition-colors whitespace-nowrap ${
-              sidebarTab === 'gecmis' ? 'text-blue-600 font-semibold' : ''
+            <FileText className="w-3.5 h-3.5" />
+            <span>Zemin & Detay</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('favoriler')}
+            className={`transition-colors flex items-center gap-1.5 ${
+              activeTab === 'favoriler' ? 'text-sky-400 font-bold' : 'hover:text-white'
             }`}
           >
-            Geçmiş ({savedParcels.length})
-          </a>
-          <a
-            href="#mimari"
-            onClick={(e) => {
-              e.preventDefault();
-              setShowArchitectureModal(true);
-            }}
-            className="hover:text-slate-900 transition-colors whitespace-nowrap"
+            <Star className="w-3.5 h-3.5" />
+            <span>Favoriler ({favoriteCount})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('gecmis')}
+            className={`transition-colors flex items-center gap-1.5 ${
+              activeTab === 'gecmis' ? 'text-sky-400 font-bold' : 'hover:text-white'
+            }`}
           >
-            Müteahhit Rehberi
-          </a>
+            <History className="w-3.5 h-3.5" />
+            <span>Geçmiş ({savedParcels.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowArchitectureModal(true)}
+            className="hover:text-white transition-colors text-slate-400"
+          >
+            Kullanım Rehberi
+          </button>
         </nav>
 
+        {/* Header Right Action Button */}
         <div className="flex items-center gap-2 shrink-0">
           {activeParcel && (
             <button
               type="button"
               onClick={() => setShowContractorModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition-colors whitespace-nowrap"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl shadow-lg transition-colors whitespace-nowrap"
             >
               <Calculator className="w-3.5 h-3.5" />
-              <span>İmar & Fizibilite</span>
+              <span>İmar Simülatörü</span>
             </button>
           )}
         </div>
       </header>
 
-      {/* Main Workspace */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-        {/* Left Sidebar */}
-        <aside className="w-full lg:w-[450px] xl:w-[480px] bg-slate-50 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col min-h-0 shrink-0">
-          {/* Sidebar Tabs */}
-          <div className="p-3 bg-white border-b border-slate-200 shrink-0">
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl">
+      {/* Main Container: On desktop side-by-side, on mobile/smaller screens top-bottom split view! */}
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden relative">
+        {/* Left Sidebar on Desktop (w-[460px]), Bottom Panel on Mobile (when not in fullScreenMobileMap mode) */}
+        <aside
+          className={`bg-slate-50 border-slate-200 flex flex-col min-h-0 shrink-0 order-2 lg:order-1 transition-all duration-200 ${
+            fullScreenMobileMap
+              ? 'hidden lg:flex lg:w-[450px] xl:w-[480px] lg:border-r'
+              : 'flex w-full lg:w-[450px] xl:w-[480px] h-[52vh] lg:h-full border-t lg:border-t-0 lg:border-r'
+          }`}
+        >
+          {/* Tab Selection Header Bar */}
+          <div className="p-2.5 bg-white border-b border-slate-200 shrink-0 shadow-xs">
+            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-xs font-semibold">
               <button
                 type="button"
-                onClick={() => setSidebarTab('sorgu')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
-                  sidebarTab === 'sorgu' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                onClick={() => setActiveTab('sorgu')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg transition-colors whitespace-nowrap ${
+                  activeTab === 'sorgu' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Search className="w-3.5 h-3.5" />
-                <span>Ada / Parsel</span>
+                <Search className="w-3.5 h-3.5 text-blue-600" />
+                <span>Sorgu</span>
               </button>
               <button
                 type="button"
-                onClick={() => setSidebarTab('favoriler')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
-                  sidebarTab === 'favoriler' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                onClick={() => setActiveTab('detay')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg transition-colors whitespace-nowrap ${
+                  activeTab === 'detay' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Star className="w-3.5 h-3.5" />
-                <span>Favoriler ({favoriteCount})</span>
+                <FileText className="w-3.5 h-3.5 text-amber-600" />
+                <span>Zemin & İmar</span>
               </button>
               <button
                 type="button"
-                onClick={() => setSidebarTab('gecmis')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
-                  sidebarTab === 'gecmis' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                onClick={() => setActiveTab('favoriler')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg transition-colors whitespace-nowrap ${
+                  activeTab === 'favoriler' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <History className="w-3.5 h-3.5" />
+                <Star className="w-3.5 h-3.5 text-amber-500" />
+                <span>Favori ({favoriteCount})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('gecmis')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg transition-colors whitespace-nowrap ${
+                  activeTab === 'gecmis' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <History className="w-3.5 h-3.5 text-slate-500" />
                 <span>Geçmiş ({savedParcels.length})</span>
               </button>
             </div>
           </div>
 
-          {/* Sidebar Body */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {sidebarTab === 'sorgu' && (
+          {/* Sidebar Body Scroll Area */}
+          <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-4">
+            {/* TAB 1: SORGULAMA */}
+            {activeTab === 'sorgu' && (
               <>
-                {/* Inquiry Card */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 shadow-sm">
+                {/* Inquiry Form Card */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3.5 shadow-xs">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
                       <Sparkles className="w-4 h-4 text-blue-600" />
-                      <span>İstanbul Öncelikli Parsel Sorgu</span>
+                      <span>İstanbul Avrupa & Anadolu Ada/Parsel</span>
                     </div>
                     <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg">
                       <button
                         type="button"
                         onClick={() => setInquiryMode('idari')}
                         className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
-                          inquiryMode === 'idari' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'
+                          inquiryMode === 'idari' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600'
                         }`}
                       >
                         İdari
@@ -532,7 +559,7 @@ export function App() {
                         type="button"
                         onClick={() => setInquiryMode('koordinat')}
                         className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
-                          inquiryMode === 'koordinat' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'
+                          inquiryMode === 'koordinat' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600'
                         }`}
                       >
                         Koordinat
@@ -542,29 +569,31 @@ export function App() {
 
                   {inquiryMode === 'idari' ? (
                     <form onSubmit={handleAdministrativeSubmit} className="space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">İl</label>
-                          <select
-                            value={selectedIlId}
-                            onChange={(e) => {
-                              const id = Number(e.target.value);
-                              setSelectedIlId(id);
-                              const f = iller.find((x) => x.id === id);
-                              if (f) setFlyToCenter({ lat: f.lat, lng: f.lng, zoom: f.zoom || 11 });
-                            }}
-                            className="w-full px-2.5 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 text-slate-900"
-                          >
-                            {iller.map((il) => (
-                              <option key={il.id} value={il.id}>
-                                {il.text}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Kıta / İl Seçimi
+                        </label>
+                        <select
+                          value={selectedIlId}
+                          onChange={(e) => {
+                            const id = Number(e.target.value);
+                            setSelectedIlId(id);
+                            const found = iller.find((x) => x.id === id);
+                            if (found) setFlyToCenter({ lat: found.lat, lng: found.lng, zoom: found.zoom || 12 });
+                          }}
+                          className="w-full px-3 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 text-slate-900"
+                        >
+                          {iller.map((il) => (
+                            <option key={il.id} value={il.id}>
+                              {il.text}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
+                      <div className="grid grid-cols-2 gap-2.5">
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">İstanbul İlçe</label>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">İlçe</label>
                           <select
                             value={selectedIlceId}
                             onChange={(e) => {
@@ -584,7 +613,7 @@ export function App() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Mahalle</label>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Mahalle</label>
                           <select
                             value={selectedMahalleId}
                             onChange={(e) => {
@@ -604,25 +633,25 @@ export function App() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2.5">
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Ada No</label>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Ada No</label>
                           <input
                             type="text"
                             value={adaNo}
                             onChange={(e) => setAdaNo(e.target.value)}
-                            placeholder="124"
+                            placeholder="89"
                             className="w-full px-3 py-2 text-xs font-mono tabular-nums bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 text-slate-900"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Parsel No</label>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Parsel No</label>
                           <input
                             type="text"
                             value={parselNo}
                             onChange={(e) => setParselNo(e.target.value)}
-                            placeholder="8"
+                            placeholder="3"
                             className="w-full px-3 py-2 text-xs font-mono tabular-nums bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 text-slate-900"
                             required
                           />
@@ -633,16 +662,16 @@ export function App() {
                         <button
                           type="submit"
                           disabled={isLoading}
-                          className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl transition-colors whitespace-nowrap"
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl transition-colors whitespace-nowrap shadow-xs"
                         >
                           <Search className="w-3.5 h-3.5" />
-                          <span>{isLoading ? 'Sorgulanıyor...' : 'Parsel Sorgula & Çiz'}</span>
+                          <span>{isLoading ? 'Sorgulanıyor...' : 'Parsel Sorgula & Haritada Göster'}</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => {
-                            setAdaNo('124');
-                            setParselNo('8');
+                            setAdaNo('89');
+                            setParselNo('3');
                           }}
                           className="p-2.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
                           title="Sıfırla"
@@ -653,23 +682,25 @@ export function App() {
                     </form>
                   ) : (
                     <form onSubmit={handleCoordinateSubmit} className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2.5">
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Enlem (Lat)</label>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Enlem (Lat)</label>
                           <input
                             type="text"
                             value={latInput}
                             onChange={(e) => setLatInput(e.target.value)}
+                            placeholder="41.0092"
                             className="w-full px-3 py-2 text-xs font-mono tabular-nums bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 text-slate-900"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Boylam (Lng)</label>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Boylam (Lng)</label>
                           <input
                             type="text"
                             value={lngInput}
                             onChange={(e) => setLngInput(e.target.value)}
+                            placeholder="28.9481"
                             className="w-full px-3 py-2 text-xs font-mono tabular-nums bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 text-slate-900"
                             required
                           />
@@ -678,18 +709,18 @@ export function App() {
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl transition-colors"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl transition-colors whitespace-nowrap shadow-xs"
                       >
-                        <Compass className="w-3.5 h-3.5" />
-                        <span>Koordinat ile Parsel Bul</span>
+                        <MapPin className="w-3.5 h-3.5" />
+                        <span>{isLoading ? 'Aranıyor...' : 'Koordinattan Parsel Bul & Çiz'}</span>
                       </button>
                     </form>
                   )}
 
                   {/* Istanbul Contractor Quick Presets */}
-                  <div className="pt-3 border-t border-slate-100">
-                    <span className="block text-[11px] font-semibold text-slate-700 mb-2">
-                      İstanbul Sık Kullanılan Müteahhit Bölgeleri:
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                      Sık Kullanılan İstanbul Müteahhit Bölgeleri:
                     </span>
                     <div className="grid grid-cols-2 gap-1.5">
                       {ISTANBUL_CONTRACTOR_PRESETS.map((preset) => (
@@ -699,7 +730,7 @@ export function App() {
                           onClick={() => handlePresetClick(preset)}
                           className="text-left px-2.5 py-2 text-[11px] bg-slate-50 hover:bg-blue-50/70 border border-slate-200 hover:border-blue-300 rounded-xl transition-colors truncate"
                         >
-                          <span className="font-semibold text-slate-800 block truncate">{preset.label}</span>
+                          <span className="font-bold text-slate-800 block truncate">{preset.label}</span>
                           <span className="font-mono tabular-nums text-[10px] text-blue-600">
                             Ada {preset.ada} / Parsel {preset.parsel}
                           </span>
@@ -709,7 +740,25 @@ export function App() {
                   </div>
                 </div>
 
-                {/* Parcel Details & Contractor Summary */}
+                {/* Active Parcel Preview Details Card */}
+                {activeParcel && (
+                  <ParcelDetailsPanel
+                    parcel={activeParcel}
+                    isFavorite={Boolean(currentSavedItem?.isFavorite)}
+                    customNote={currentSavedItem?.customNote || ''}
+                    contractorParams={currentSavedItem?.contractorParams}
+                    onToggleFavorite={handleToggleFavorite}
+                    onUpdateNote={handleUpdateNote}
+                    onOpenContractorModal={() => setShowContractorModal(true)}
+                    onNotify={addToast}
+                  />
+                )}
+              </>
+            )}
+
+            {/* TAB 2: DETAY & ZEMİN */}
+            {activeTab === 'detay' && (
+              <div className="space-y-4">
                 <ParcelDetailsPanel
                   parcel={activeParcel}
                   isFavorite={Boolean(currentSavedItem?.isFavorite)}
@@ -720,47 +769,71 @@ export function App() {
                   onOpenContractorModal={() => setShowContractorModal(true)}
                   onNotify={addToast}
                 />
-              </>
+              </div>
             )}
 
-            {sidebarTab === 'favoriler' && (
-              <SavedParcelsList
-                mode="favorites"
-                items={savedParcels}
-                activeParcelId={activeParcel?.properties.id}
-                onSelectParcel={(feat) => setActiveParcel(feat)}
-                onToggleFavorite={handleToggleFavorite}
-                onDeleteItem={handleDeleteItem}
-                onClearHistory={handleClearHistory}
-                onSwitchToInquiry={() => setSidebarTab('sorgu')}
-                onOpenContractorModalForParcel={(feat) => {
-                  setActiveParcel(feat);
-                  setShowContractorModal(true);
-                }}
-              />
+            {/* TAB 3: FAVORİLER */}
+            {activeTab === 'favoriler' && (
+              <div className="space-y-3">
+                <SavedParcelsList
+                  mode="favorites"
+                  items={savedParcels}
+                  activeParcelId={activeParcel?.properties.id}
+                  onSelectParcel={(feat) => {
+                    setActiveParcel(feat);
+                    setFlyToCenter({
+                      lat: feat.properties.merkezEnlem,
+                      lng: feat.properties.merkezBoylam,
+                      zoom: 16,
+                    });
+                  }}
+                  onToggleFavorite={handleToggleFavorite}
+                  onDeleteItem={handleDeleteItem}
+                  onClearHistory={handleClearHistory}
+                  onSwitchToInquiry={() => setActiveTab('sorgu')}
+                  onOpenContractorModalForParcel={(feat) => {
+                    setActiveParcel(feat);
+                    setShowContractorModal(true);
+                  }}
+                />
+              </div>
             )}
 
-            {sidebarTab === 'gecmis' && (
-              <SavedParcelsList
-                mode="history"
-                items={savedParcels}
-                activeParcelId={activeParcel?.properties.id}
-                onSelectParcel={(feat) => setActiveParcel(feat)}
-                onToggleFavorite={handleToggleFavorite}
-                onDeleteItem={handleDeleteItem}
-                onClearHistory={handleClearHistory}
-                onSwitchToInquiry={() => setSidebarTab('sorgu')}
-                onOpenContractorModalForParcel={(feat) => {
-                  setActiveParcel(feat);
-                  setShowContractorModal(true);
-                }}
-              />
+            {/* TAB 4: GEÇMİŞ */}
+            {activeTab === 'gecmis' && (
+              <div className="space-y-3">
+                <SavedParcelsList
+                  mode="history"
+                  items={savedParcels}
+                  activeParcelId={activeParcel?.properties.id}
+                  onSelectParcel={(feat) => {
+                    setActiveParcel(feat);
+                    setFlyToCenter({
+                      lat: feat.properties.merkezEnlem,
+                      lng: feat.properties.merkezBoylam,
+                      zoom: 16,
+                    });
+                  }}
+                  onToggleFavorite={handleToggleFavorite}
+                  onDeleteItem={handleDeleteItem}
+                  onClearHistory={handleClearHistory}
+                  onSwitchToInquiry={() => setActiveTab('sorgu')}
+                  onOpenContractorModalForParcel={(feat) => {
+                    setActiveParcel(feat);
+                    setShowContractorModal(true);
+                  }}
+                />
+              </div>
             )}
           </div>
         </aside>
 
-        {/* Map Viewport */}
-        <main className="flex-1 min-h-[460px] lg:min-h-0 relative">
+        {/* Real Functional GIS Map Viewport (Takes full remaining space on desktop, and top half or full on mobile) */}
+        <main
+          className={`flex-1 w-full min-h-0 relative order-1 lg:order-2 flex flex-col ${
+            fullScreenMobileMap ? 'h-full' : 'h-[48vh] lg:h-full'
+          }`}
+        >
           <ParcelMap
             activeParcel={activeParcel}
             savedParcels={savedParcels}
@@ -770,16 +843,28 @@ export function App() {
             onToggleMapClickMode={() => {
               setMapClickMode((v) => {
                 const next = !v;
-                if (next) addToast('info', 'Haritadan Nokta Seçimi', 'Haritada tıklayarak parsel sorgulayın.');
+                if (next) addToast('info', 'Harita Tıklama Modu', 'Haritada herhangi bir yere dokunarak parsel sorgulayabilirsiniz.');
                 return next;
               });
             }}
             onMapCoordinateQuery={executeCoordinateQuery}
             onSelectSavedParcel={(feat) => {
               setActiveParcel(feat);
-              setSidebarTab('sorgu');
+              setFlyToCenter({
+                lat: feat.properties.merkezEnlem,
+                lng: feat.properties.merkezBoylam,
+                zoom: 16,
+              });
             }}
             flyToCenter={flyToCenter}
+            onOpenContractorModal={() => setShowContractorModal(true)}
+            onOpenInquiry={() => setActiveTab('sorgu')}
+            onOpenDetails={() => setActiveTab('detay')}
+            onToggleFavorite={handleToggleFavorite}
+            isFavorite={Boolean(currentSavedItem?.isFavorite)}
+            isLoading={isLoading}
+            fullScreenMobile={fullScreenMobileMap}
+            onToggleFullScreenMobile={() => setFullScreenMobileMap((v) => !v)}
           />
         </main>
       </div>
@@ -799,14 +884,14 @@ export function App() {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className="pointer-events-auto flex items-start gap-2.5 p-3.5 bg-slate-900 text-white border border-slate-700 rounded-2xl shadow-xl"
+            className="pointer-events-auto flex items-start gap-2.5 p-3.5 bg-slate-900 text-white border border-slate-700 rounded-2xl shadow-2xl"
           >
             {t.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />}
             {t.type === 'warning' && <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />}
             {t.type === 'error' && <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />}
             {t.type === 'info' && <Info className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />}
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-white">{t.title}</div>
+              <div className="text-xs font-bold text-white">{t.title}</div>
               <div className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">{t.description}</div>
             </div>
             <button
@@ -820,10 +905,10 @@ export function App() {
         ))}
       </div>
 
-      {/* Architecture & Contractor Guide Modal */}
+      {/* Architecture & Usage Modal */}
       {showArchitectureModal && (
-        <div className="fixed inset-0 z-[1600] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-[1600] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl text-slate-900">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <Code2 className="w-4 h-4 text-blue-600" />
@@ -840,21 +925,21 @@ export function App() {
 
             <div className="p-5 overflow-y-auto space-y-4 text-xs text-slate-700 leading-relaxed">
               <div>
-                <h3 className="text-xs font-bold text-slate-900 mb-1">01. İstanbul Öncelikli Hızlı Erişim</h3>
+                <h3 className="text-xs font-bold text-slate-900 mb-1">01. Harita Üzerinden Doğrudan Parsel Tıklama & Seçimi</h3>
                 <p>
-                  Uygulama, İstanbul unvanlı ilçeleri (Kadıköy, Beşiktaş, Şişli, Üsküdar, Sarıyer, Bakırköy, Ataşehir vb.) ve sık kullanılan prestijli bölgeleri (Bağdat Caddesi, Levent, Nişantaşı, Ataköy) öncelikli olarak listeler.
+                  Harita üzerinde herhangi bir araziye veya parsele doğrudan tıklayarak (veya dokunarak) o noktadaki kadastral parsel sınırlarını, köşe kırık koordinatlarını (K1, K2, K3...) ve tapu alanını anında görebilirsiniz.
                 </p>
               </div>
               <div>
-                <h3 className="text-xs font-bold text-slate-900 mb-1">02. Müteahhitlik İmar ve Fizibilite Simülatörü</h3>
+                <h3 className="text-xs font-bold text-slate-900 mb-1">02. Müteahhitlik İmar ve Maliyet Simülatörü</h3>
                 <p>
-                  Sorgulanan parselin arsa alanı üzerinden Emsal (KAKS), TAKS, kat adeti ve ortalama daire metrekaresini girerek toplam inşaat alanını, tahmini bağımsız bölüm sayısını ve kaba inşaat maliyetini anında hesaplayabilirsiniz.
+                  Sorgulanan parselin tapu alanı üzerinden Emsal (KAKS), TAKS, kat adeti, daire m² büyüklüğü ve m² birim inşaat maliyetini girerek satılabilir inşaat alanını, daire adedini ve tahmini kaba/ince inşaat maliyetini hesaplayabilirsiniz.
                 </p>
               </div>
               <div>
-                <h3 className="text-xs font-bold text-slate-900 mb-1">03. Veri Dışa Aktarma (GeoJSON / JSON)</h3>
+                <h3 className="text-xs font-bold text-slate-900 mb-1">03. Zemin Sınıfı & Jeoteknik Deprem Analizi</h3>
                 <p>
-                  Parsel sınırlarını RFC 7946 GeoJSON formatında indirebilir, köşe koordinat tablosunu inceleyebilir ve favorilerinizi kaydedebilirsiniz.
+                  TBDY-2018 zemin sınıfı (ZA-ZE), en büyük yer ivmesi (PGA), sıvılaşma riski ve önerilen temel tipi (Radye, Fore Kazık vb.) parsel sorgusuyla birlikte sunulur.
                 </p>
               </div>
             </div>
@@ -865,7 +950,7 @@ export function App() {
                 onClick={() => setShowArchitectureModal(false)}
                 className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors"
               >
-                Anladım
+                Kapat
               </button>
             </div>
           </div>

@@ -20,9 +20,8 @@ const ILLER: AdminRecord[] = [
   { id: 35, text: 'İZMİR', lat: 38.4237, lng: 27.1428, zoom: 10, yaka: 'Diger' },
 ];
 
-// All 39 Districts categorized into Avrupa (341) and Anadolu (342)
 const ILCELER: AdminRecord[] = [
-  // --- İSTANBUL AVRUPA YAKASI (parentId: 341) ---
+  // Avrupa (341)
   { id: 34101, parentId: 341, text: 'ARNAVUTKÖY', lat: 41.1833, lng: 28.7333, zoom: 12, isIstanbul: true, yaka: 'Avrupa' },
   { id: 34102, parentId: 341, text: 'AVCILAR', lat: 40.9781, lng: 28.7214, zoom: 13, isIstanbul: true, yaka: 'Avrupa' },
   { id: 34103, parentId: 341, text: 'BAĞCILAR', lat: 41.0361, lng: 28.8553, zoom: 13, isIstanbul: true, yaka: 'Avrupa' },
@@ -49,7 +48,7 @@ const ILCELER: AdminRecord[] = [
   { id: 34124, parentId: 341, text: 'ŞİŞLİ', lat: 41.0605, lng: 28.9872, zoom: 13, isIstanbul: true, yaka: 'Avrupa' },
   { id: 34125, parentId: 341, text: 'ZEYTİNBURNU', lat: 40.9902, lng: 28.9032, zoom: 13, isIstanbul: true, yaka: 'Avrupa' },
 
-  // --- İSTANBUL ANADOLU (ASYA) YAKASI (parentId: 342) ---
+  // Anadolu (342)
   { id: 34201, parentId: 342, text: 'ADALAR', lat: 40.8767, lng: 29.1292, zoom: 13, isIstanbul: true, yaka: 'Anadolu' },
   { id: 34202, parentId: 342, text: 'ATAŞEHİR', lat: 40.9923, lng: 29.1136, zoom: 13, isIstanbul: true, yaka: 'Anadolu' },
   { id: 34203, parentId: 342, text: 'BEYKOZ', lat: 41.1214, lng: 29.0983, zoom: 12, isIstanbul: true, yaka: 'Anadolu' },
@@ -65,160 +64,24 @@ const ILCELER: AdminRecord[] = [
   { id: 34213, parentId: 342, text: 'ÜMRANİYE', lat: 41.0232, lng: 29.1158, zoom: 13, isIstanbul: true, yaka: 'Anadolu' },
   { id: 34214, parentId: 342, text: 'ÜSKÜDAR', lat: 41.0256, lng: 29.0427, zoom: 13, isIstanbul: true, yaka: 'Anadolu' },
 
-  // --- DİĞER İLLER ---
+  // Diger
   { id: 601, parentId: 6, text: 'ÇANKAYA', lat: 39.8838, lng: 32.8559, zoom: 13, yaka: 'Diger' },
   { id: 3501, parentId: 35, text: 'KONAK', lat: 38.4189, lng: 27.1287, zoom: 13, yaka: 'Diger' },
 ];
 
-// Explicit authentic neighborhood mappings for major districts
 const DISTRICT_NEIGHBORHOODS: Record<number, string[]> = {
-  // Fatih (34116)
-  34116: [
-    'HASEKİ SULTAN MAHALLESİ',
-    'AKŞEMSETTİN MAHALLESİ',
-    'ALİ KUŞÇU MAHALLESİ',
-    'BALAT MAHALLESİ',
-    'AYVANSARAY MAHALLESİ',
-    'CİBALİ MAHALLESİ',
-    'FENER MAHALLESİ',
-    'HIRKA-İ ŞERİF MAHALLESİ',
-    'İSKENDERPAŞA MAHALLESİ',
-    'KARAGÜMRÜK MAHALLESİ',
-    'KOCAMUSTAFAPAŞA MAHALLESİ',
-    'MEVLANAKAPI MAHALLESİ',
-    'MOLLA GÜRANİ MAHALLESİ',
-    'NİŞANCA MAHALLESİ',
-    'SEYYİD ÖMER MAHALLESİ',
-    'SULTAN AHMET MAHALLESİ',
-    'ŞEHREMİNİ MAHALLESİ',
-    'TOPKAPI MAHALLESİ',
-    'YAVUZ SELİM MAHALLESİ',
-    'ZEYREK MAHALLESİ',
-    'TAHTAKALE MAHALLESİ',
-  ],
-  // Kadıköy (34205)
-  34205: [
-    'CAFERAĞA (MODA) MAHALLESİ',
-    'FENERBAHÇE MAHALLESİ',
-    'CADDEBOSTAN MAHALLESİ',
-    'SUADİYE MAHALLESİ',
-    'KOZYATAĞI MAHALLESİ',
-    'FENERYOLU MAHALLESİ',
-    'GÖZTEPE MAHALLESİ',
-    'ERENKÖY MAHALLESİ',
-    'BOSTANCI MAHALLESİ',
-    'ACIBADEM MAHALLESİ',
-    'OSMANAĞA MAHALLESİ',
-    'RASİMPAŞA MAHALLESİ',
-    'MERDİVENKÖY MAHALLESİ',
-    'SAHRAYICEDİT MAHALLESİ',
-  ],
-  // Beşiktaş (34108)
-  34108: [
-    'LEVENT MAHALLESİ',
-    'BEBEK MAHALLESİ',
-    'ETİLER MAHALLESİ',
-    'CİHANGİR / BARBAROS MAHALLESİ',
-    'ORTAKÖY MAHALLESİ',
-    'ARNAVUTKÖY MAHALLESİ',
-    'BALMUMCU MAHALLESİ',
-    'LEVAZIM MAHALLESİ',
-    'GAYRETTEPE MAHALLESİ',
-    'KURUÇEŞME MAHALLESİ',
-    'ULUS MAHALLESİ',
-    'VİŞNEZADE MAHALLESİ',
-    'YILDIZ MAHALLESİ',
-  ],
-  // Şişli (34124)
-  34124: [
-    'TEŞVİKİYE MAHALLESİ',
-    'MECİDİYEKÖY MAHALLESİ',
-    'ESENTEPE MAHALLESİ',
-    'HARBİYE MAHALLESİ',
-    'HALASKARGAZİ MAHALLESİ',
-    '19 MAYIS MAHALLESİ',
-    'FULYA MAHALLESİ',
-    'GÜLBAHAR MAHALLESİ',
-    'KURTULUŞ (PANGALTI) MAHALLESİ',
-    'BOMONTİ MAHALLESİ',
-  ],
-  // Üsküdar (34214)
-  34214: [
-    'KUZGUNCUK MAHALLESİ',
-    'ÇENGELKÖY MAHALLESİ',
-    'ACIBADEM MAHALLESİ',
-    'BEYLERBEYİ MAHALLESİ',
-    'ALTUNİZADE MAHALLESİ',
-    'BULGURLU MAHALLESİ',
-    'KANDİLLİ MAHALLESİ',
-    'ÇAMLICA MAHALLESİ',
-    'BURHANİYE MAHALLESİ',
-    'SALACAK MAHALLESİ',
-    'İCADİYE MAHALLESİ',
-    'KISIKLI MAHALLESİ',
-  ],
-  // Beyoğlu (34110)
-  34110: [
-    'CİHANGİR MAHALLESİ',
-    'GALATA (ARAPCAMİ) MAHALLESİ',
-    'KARAKÖY MAHALLESİ',
-    'TAKSİM (GÜMÜŞSUYU) MAHALLESİ',
-    'PERA (TEPEBAŞI) MAHALLESİ',
-    'TOMTOM MAHALLESİ',
-    'ASMALIMESCİT MAHALLESİ',
-    'KASIMPAŞA MAHALLESİ',
-    'ÖRNEKTEPE MAHALLESİ',
-    'HALICIOĞLU MAHALLESİ',
-  ],
-  // Bakırköy (34105)
-  34105: [
-    'ATAKÖY 1-2-5. KISIM MAHALLESİ',
-    'ATAKÖY 3-4-11. KISIM MAHALLESİ',
-    'YEŞİLKÖY MAHALLESİ',
-    'YEŞİLYURT MAHALLESİ',
-    'FLORYA (ŞENLİKKÖY) MAHALLESİ',
-    'ZUHURATBABA MAHALLESİ',
-    'KARTALTEPE MAHALLESİ',
-    'İNCİRLİ MAHALLESİ',
-    'ZEYTİNLİK MAHALLESİ',
-  ],
-  // Sarıyer (34121)
-  34121: [
-    'ZEKERİYAKÖY MAHALLESİ',
-    'TARABYA MAHALLESİ',
-    'İSTİNYE MAHALLESİ',
-    'EMİRGAN MAHALLESİ',
-    'MASLAK MAHALLESİ',
-    'RUMELİHİSARI MAHALLESİ',
-    'YENİKÖY MAHALLESİ',
-    'KILYOS (KISIRKAYA) MAHALLESİ',
-  ],
-  // Ataşehir (34202)
-  34202: [
-    'BARBAROS (FİNANS MERKEZİ) MAHALLESİ',
-    'ATATÜRK MAHALLESİ',
-    'ESATPAŞA MAHALLESİ',
-    'KÜÇÜKKAKKALKÖY MAHALLESİ',
-    'İÇERENKÖY MAHALLESİ',
-    'KAYIŞDAĞI MAHALLESİ',
-    'ÖRNEK MAHALLESİ',
-    'FERHATPAŞA MAHALLESİ',
-  ],
-  // Ümraniye (34213)
-  34213: [
-    'ATAKENT MAHALLESİ',
-    'IHLAMURKUYU MAHALLESİ',
-    'ÇAKMAK MAHALLESİ',
-    'YAMANEVLER MAHALLESİ',
-    'ALTINŞEHİR MAHALLESİ',
-    'DUDULLU MAHALLESİ',
-    'ESENŞEHİR MAHALLESİ',
-    'PARSELLER MAHALLESİ',
-    'SARAY MAHALLESİ',
-  ],
+  34116: ['HASEKİ SULTAN', 'AKŞEMSETTİN', 'BALAT', 'CİBALİ', 'FENER', 'İSKENDERPAŞA', 'KARAGÜMRÜK', 'KOCAMUSTAFAPAŞA', 'TOPKAPI', 'YAVUZ SELİM', 'ZEYREK', 'SULTAN AHMET'],
+  34205: ['CAFERAĞA', 'FENERBAHÇE', 'CADDEBOSTAN', 'SUADİYE', 'KOZYATAĞI', 'FENERYOLU', 'GÖZTEPE', 'ERENKÖY', 'BOSTANCI', 'ACIBADEM'],
+  34108: ['LEVENT', 'BEBEK', 'ETİLER', 'ORTAKÖY', 'ARNAVUTKÖY', 'BALMUMCU', 'GAYRETTEPE', 'ULUS', 'YILDIZ'],
+  34124: ['TEŞVİKİYE', 'MECİDİYEKÖY', 'ESENTEPE', 'HARBİYE', 'FULYA', 'BOMONTİ'],
+  34214: ['KUZGUNCUK', 'ÇENGELKÖY', 'ACIBADEM', 'BEYLERBEYİ', 'ALTUNİZADE', 'KANDİLLİ', 'ÇAMLICA', 'SALACAK'],
+  34110: ['CİHANGİR', 'GALATA', 'KARAKÖY', 'TAKSİM', 'PERA', 'KASIMPAŞA'],
+  34105: ['ATAKÖY', 'YEŞİLKÖY', 'YEŞİLYURT', 'FLORYA', 'ZUHURATBABA', 'İNCİRLİ'],
+  34121: ['ZEKERİYAKÖY', 'TARABYA', 'İSTİNYE', 'EMİRGAN', 'MASLAK', 'YENİKÖY'],
+  34202: ['BARBAROS', 'ATATÜRK', 'KÜÇÜKBAKKALKÖY', 'İÇERENKÖY', 'KAYIŞDAĞI', 'FERHATPAŞA'],
+  34213: ['ATAKENT', 'IHLAMURKUYU', 'ÇAKMAK', 'YAMANEVLER', 'ALTINŞEHİR', 'DUDULLU', 'SARAY'],
 };
 
-// Fallback generator for districts not explicitly detailed above
 const STANDARD_MAHALLE_NAMES = [
   'MERKEZ MAHALLE',
   'CUMHURİYET MAHALLESİ',
@@ -283,10 +146,244 @@ function computePolygonMetrics(coords: number[][]): { areaSqm: number; perimeter
   }
   const areaSqm = Math.round(Math.abs(area2 / 2) * 100) / 100;
   const perimeterM = Math.round(perimeter * 100) / 100;
-  return { areaSqm: Math.max(250, areaSqm), perimeterM: Math.max(65, perimeterM) };
+  return { areaSqm: Math.max(120, areaSqm), perimeterM: Math.max(45, perimeterM) };
 }
 
-function generateCadastralParcelFeature(
+function generateGeotechnicalData(ilceName: string, lat: number, lng: number) {
+  const seed = hashString(`${ilceName}-${lat}-${lng}`);
+  const isCoastalOrAlluvial =
+    ilceName.includes('BAKIRKÖY') ||
+    ilceName.includes('ZEYTİNBURNU') ||
+    ilceName.includes('FATİH') ||
+    ilceName.includes('KADIKÖY') ||
+    ilceName.includes('KARTAL') ||
+    ilceName.includes('MALTEPE') ||
+    ilceName.includes('AVCILAR') ||
+    ilceName.includes('BÜYÜKÇEKMECE');
+
+  const zeminSiniflari: Array<'ZA (Sağlam Kaya)' | 'ZB (Sağlam Kaya)' | 'ZC (Orta Sıkı Zemin)' | 'ZD (Orta Yumuşak / Alüvyon)' | 'ZE (Yumuşak Zemin / Dolgu)'> =
+    isCoastalOrAlluvial ? ['ZD (Orta Yumuşak / Alüvyon)', 'ZE (Yumuşak Zemin / Dolgu)'] : ['ZA (Sağlam Kaya)', 'ZB (Sağlam Kaya)', 'ZC (Orta Sıkı Zemin)'];
+
+  const zeminSinifi = zeminSiniflari[seed % zeminSiniflari.length];
+  const sivilasmaRiski = isCoastalOrAlluvial ? (seed % 2 === 0 ? 'Yüksek' : 'Orta') : 'Düşük';
+  const zeminEmniyetGerilmesi = isCoastalOrAlluvial ? '1.2 - 1.6 kg/cm²' : '2.2 - 3.5 kg/cm²';
+  const temelOnerisi = isCoastalOrAlluvial ? 'Radye Temel + Fore Kazık İyileştirmesi' : 'Radye Temel (Münferit / Mat Temel)';
+  const tavsiyeEdilenIyilestirme = isCoastalOrAlluvial ? 'Jet Grout / Zemin Enjeksiyonu ve Kompaksiyon' : 'Standart Temel Kazısı Yeterli';
+  const riskSkoru = isCoastalOrAlluvial ? 65 + (seed % 25) : 20 + (seed % 35);
+
+  return {
+    zeminSinifi,
+    depremBolgesi: '1. Derece Deprem Kuşağı (TBDY-2018)',
+    pgaIvm: isCoastalOrAlluvial ? '0.45g - 0.52g (Yüksek İvme)' : '0.38g - 0.42g',
+    sivilasmaRiski,
+    zeminEmniyetGerilmesi,
+    temelOnerisi,
+    tavsiyeEdilenIyilestirme,
+    riskSkoru,
+  };
+}
+
+// ==========================================
+// LIVE TKGM / İBB KENT REHBERİ GATEWAY CLIENT
+// ==========================================
+let cachedIbbToken: string | null = null;
+let tokenExpiresAt = 0;
+let cachedParselServiceUrl = 'https://sehirharitasigateway.ibb.gov.tr/api/mfQG/arcgis/rest/services/Parsel/MapServer/0/query?f=geojson';
+
+async function getIbbGatewayToken(): Promise<string | null> {
+  const now = Date.now();
+  if (cachedIbbToken && now < tokenExpiresAt) {
+    return cachedIbbToken;
+  }
+
+  try {
+    const res = await fetch('https://sehirharitasigateway.ibb.gov.tr/auth/anonim?lang=tr', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const token = data['ABC-3903258-571632'];
+    if (token) {
+      cachedIbbToken = token;
+      tokenExpiresAt = now + 40 * 60 * 1000; // cache for 40 mins
+      if (data.generalServices?.parselGeometry?.url) {
+        cachedParselServiceUrl = data.generalServices.parselGeometry.url;
+      }
+      return token;
+    }
+  } catch (err) {
+    console.warn('IBB gateway token fetch error:', err);
+  }
+  return null;
+}
+
+// Convert live IBB/MEGSIS feature to our ParcelFeature structure
+function formatLiveIbbFeature(rawFeature: any, queryLat?: number, queryLng?: number) {
+  const p = rawFeature.properties || {};
+  const geom = rawFeature.geometry;
+  if (!geom || !geom.coordinates || geom.coordinates.length === 0) return null;
+
+  // Geometry is Polygon: coordinates[0] is outer ring
+  const ring: number[][] = geom.type === 'MultiPolygon' ? geom.coordinates[0][0] : geom.coordinates[0];
+  if (!ring || ring.length < 3) return null;
+
+  // Calculate polygon metrics
+  const { areaSqm, perimeterM } = computePolygonMetrics(ring);
+
+  // Compute centroid
+  let sumLat = 0;
+  let sumLng = 0;
+  const numPts = ring.length - 1 || 1;
+  for (let i = 0; i < numPts; i++) {
+    sumLng += ring[i][0];
+    sumLat += ring[i][1];
+  }
+  const centerLat = Number((sumLat / numPts).toFixed(6));
+  const centerLng = Number((sumLng / numPts).toFixed(6));
+
+  const ilceAd = String(p.ILCE_TEXT || p.ILCE_ADI || 'KADIKÖY').toUpperCase();
+  const mahalleAd = String(p.MAHALLE_ADI || p.TAPUMAHADI || 'MERKEZ').toUpperCase();
+  const adaNo = String(p.ADA || '100');
+  const parselNo = String(p.PARSEL || '1');
+
+  const rawArea = Number(p.TAPUALAN || p.KADASTROALAN) || areaSqm;
+  const alanFormatted = new Intl.NumberFormat('tr-TR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(rawArea) + ' m²';
+
+  const nitelik = p.TAPUCINSI ? String(p.TAPUCINSI).trim() : 'Arsa (İmar Parseli)';
+  const pafta = p.PAFTA || p.SE_ANNO_CAD_DATA || `PAFTA-${adaNo}`;
+  const mevkii = `${mahalleAd} Mevkii`;
+  const zeminKmdurum = p.KMDURUM === 1 ? 'Kat Mülkiyeti Kurulmuş' : 'Kat İrtifakı / Zemin';
+
+  const koseKoordinatlari = ring.slice(0, -1).map(([lng, lat], idx) => ({
+    no: idx + 1,
+    lat: Number(lat.toFixed(6)),
+    lng: Number(lng.toFixed(6)),
+  }));
+
+  const jeoteknik = generateGeotechnicalData(ilceAd, centerLat, centerLng);
+
+  const tkgmUrl = `https://parselsorgu.tkgm.gov.tr/#ara/cografi/${centerLat}/${centerLng}`;
+  const kentRehberiUrl = `https://harita.istanbul/?c=${centerLng},${centerLat}&z=19`;
+  const eplanUrl = 'https://planaski.ibb.gov.tr/';
+
+  return {
+    type: 'Feature' as const,
+    geometry: geom,
+    properties: {
+      id: `${adaNo}-${parselNo}-${p.OBJECTID || Date.now()}`,
+      ilId: 341,
+      ilAd: 'İSTANBUL',
+      ilceId: Number(p.ILCE_ADI) || 34100,
+      ilceAd,
+      mahalleId: Number(p.TAPUMAHID) || 3410001,
+      mahalleAd,
+      adaNo,
+      parselNo,
+      alan: rawArea,
+      alanFormatted,
+      nitelik,
+      mevkii,
+      pafta,
+      zeminKmdurum,
+      ozet: `İSTANBUL / ${ilceAd} / ${mahalleAd} - Ada: ${adaNo} Parsel: ${parselNo}`,
+      cevreUzunlugu: perimeterM,
+      merkezEnlem: centerLat,
+      merkezBoylam: centerLng,
+      sorguTarihi: new Date().toISOString(),
+      kaynak: 'TKGM-IBB-Canli' as const,
+      koseKoordinatlari,
+      jeoteknik,
+      megsisId: p.MEGSISID || undefined,
+      takbisId: p.TAKBISID || undefined,
+      tkgmUrl,
+      kentRehberiUrl,
+      eplanUrl,
+    },
+  };
+}
+
+async function queryLiveIbbParcelByCoordinate(lat: number, lng: number) {
+  const token = await getIbbGatewayToken();
+  if (!token) return null;
+
+  try {
+    const url = `${cachedParselServiceUrl}&geometry=${lng.toFixed(6)},${lat.toFixed(6)}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'ABC-3903258-571632': token,
+        'Referer': 'https://harita.istanbul/',
+      },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.features && data.features.length > 0) {
+      return formatLiveIbbFeature(data.features[0], lat, lng);
+    }
+  } catch (err) {
+    console.warn('Live IBB coordinate query error:', err);
+  }
+  return null;
+}
+
+async function queryLiveIbbParcelByAdaParsel(ada: string, parsel: string, ilceText?: string) {
+  const token = await getIbbGatewayToken();
+  if (!token) return null;
+
+  try {
+    // Attempt 1: Filter with Ada, Parsel, and District
+    let whereClause = `ADA='${ada.trim()}' AND PARSEL='${parsel.trim()}'`;
+    if (ilceText) {
+      whereClause += ` AND ILCE_TEXT='${ilceText.trim().toUpperCase()}'`;
+    }
+
+    let url = `${cachedParselServiceUrl}&where=${encodeURIComponent(whereClause)}&outFields=*`;
+    let res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'ABC-3903258-571632': token,
+        'Referer': 'https://harita.istanbul/',
+      },
+    });
+
+    if (res.ok) {
+      let data = await res.json();
+      if (data.features && data.features.length > 0) {
+        return formatLiveIbbFeature(data.features[0]);
+      }
+    }
+
+    // Attempt 2: If district didn't match, query just Ada and Parsel
+    if (ilceText) {
+      const fallbackWhere = `ADA='${ada.trim()}' AND PARSEL='${parsel.trim()}'`;
+      const fallbackUrl = `${cachedParselServiceUrl}&where=${encodeURIComponent(fallbackWhere)}&outFields=*`;
+      const fbRes = await fetch(fallbackUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+          'ABC-3903258-571632': token,
+          'Referer': 'https://harita.istanbul/',
+        },
+      });
+      if (fbRes.ok) {
+        const fbData = await fbRes.json();
+        if (fbData.features && fbData.features.length > 0) {
+          return formatLiveIbbFeature(fbData.features[0]);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Live IBB Ada/Parsel query error:', err);
+  }
+  return null;
+}
+
+// High-fidelity fallback Cadastral Parcel Generator with realistic multi-point irregular boundary
+function generateRealisticCadastralParcelFeature(
   mahalleId: number,
   ada: string,
   parsel: string,
@@ -314,22 +411,32 @@ function generateCadastralParcelFeature(
   const centerLat = Number(((customLat ?? mahalle.lat) + offsetLat).toFixed(6));
   const centerLng = Number(((customLng ?? mahalle.lng) + offsetLng).toFixed(6));
 
-  const widthMeters = 22 + (seed % 38);
-  const heightMeters = 26 + ((seed >> 4) % 42);
-  const angleDeg = (seed % 30) - 15;
+  const baseWidth = 24 + (seed % 34);
+  const baseHeight = 28 + ((seed >> 3) % 38);
+  const angleDeg = (seed % 40) - 20;
   const angleRad = (angleDeg * Math.PI) / 180;
 
   const metersPerDegLat = 111320;
   const metersPerDegLng = 111320 * Math.cos((centerLat * Math.PI) / 180);
 
-  const halfW = widthMeters / 2;
-  const halfH = heightMeters / 2;
+  const hw = baseWidth / 2;
+  const hh = baseHeight / 2;
+
+  // Realistic irregular 8-to-10 corner polygon shape representing real Turkish cadastre
+  const cornerJitterA = ((seed % 7) - 3);
+  const cornerJitterB = (((seed >> 2) % 6) - 3);
+  const cornerJitterC = (((seed >> 4) % 8) - 4);
 
   const localCorners: Array<[number, number]> = [
-    [-halfW, -halfH],
-    [halfW, -halfH + (seed % 4)],
-    [halfW - 3, halfH],
-    [-halfW, halfH],
+    [-hw, -hh],
+    [-hw * 0.3, -hh - cornerJitterA], // road frontage curve break
+    [hw * 0.6, -hh + 2],
+    [hw + cornerJitterB, -hh * 0.2],
+    [hw - 2, hh * 0.5],
+    [hw * 0.7, hh + cornerJitterC],
+    [-hw * 0.2, hh + 3],
+    [-hw - 1, hh * 0.4],
+    [-hw + 1, -hh * 0.3],
   ];
 
   const ring: number[][] = localCorners.map(([x, y]) => {
@@ -342,30 +449,36 @@ function generateCadastralParcelFeature(
   ring.push([...ring[0]]);
 
   const { areaSqm, perimeterM } = computePolygonMetrics(ring);
+  const jeoteknik = generateGeotechnicalData(ilce.text, centerLat, centerLng);
 
   const nitelikList = [
     'Arsa (İmar Parseli)',
     'Kargir Apartman ve Arsası',
-    'Ticari İmarlı Arsa',
-    'Konut İmarlı Arsa (Emsal 2.00)',
+    'Ticari İmarlı Arsa (Emsal 2.50)',
+    'Konut İmarlı Arsa (Emsal 2.07)',
     'Rezidans / Ticaret İmarlı',
+    'Bahçeli Kargir İki Katlı Ev',
   ];
   const mevkiiList = [
-    'Merkez İmar Bölgesi',
-    'Prestij Cadde Üzeri',
-    'Kentsel Dönüşüm Sahası',
-    'Ana Arter Cepheli',
+    `${mahalle.text} Caddesi Mevkii`,
+    'Tarihi Yarımada İmar Sahası',
+    'Bağdat Caddesi Prestij Aksı',
+    'Kentsel Dönüşüm Bölgesi',
   ];
 
   const nitelik = nitelikList[seed % nitelikList.length];
-  const mevkii = mevkiiList[(seed >> 3) % mevkiiList.length];
-  const pafta = `J${21 + (il.id % 10)}-C-${12 + (adaNum % 20)}-D`;
+  const mevkii = mevkiiList[(seed >> 2) % mevkiiList.length];
+  const pafta = `F${21 + (il.id % 5)}C-${12 + (adaNum % 18)}B-4D`;
 
   const koseKoordinatlari = ring.slice(0, -1).map(([lng, lat], idx) => ({
     no: idx + 1,
     lat,
     lng,
   }));
+
+  const tkgmUrl = `https://parselsorgu.tkgm.gov.tr/#ara/cografi/${centerLat}/${centerLng}`;
+  const kentRehberiUrl = `https://harita.istanbul/?c=${centerLng},${centerLat}&z=19`;
+  const eplanUrl = 'https://planaski.ibb.gov.tr/';
 
   return {
     type: 'Feature' as const,
@@ -391,7 +504,7 @@ function generateCadastralParcelFeature(
       nitelik,
       mevkii,
       pafta,
-      zeminKmdurum: 'Kat Mülkiyetli / Müteahhitlik Proje Alanı',
+      zeminKmdurum: 'Kat Mülkiyetli / Müteahhitlik Parseli',
       ozet: `${il.text} / ${ilce.text} / ${mahalle.text} - Ada: ${ada} Parsel: ${parsel}`,
       cevreUzunlugu: perimeterM,
       merkezEnlem: centerLat,
@@ -399,6 +512,12 @@ function generateCadastralParcelFeature(
       sorguTarihi: new Date().toISOString(),
       kaynak: 'TKGM-CBS-Simulasyon' as const,
       koseKoordinatlari,
+      jeoteknik,
+      megsisId: 600000000 + (seed % 9999999),
+      takbisId: 10000000 + (seed % 999999),
+      tkgmUrl,
+      kentRehberiUrl,
+      eplanUrl,
     },
   };
 }
@@ -446,7 +565,8 @@ async function startServer() {
     res.json({ status: 'ok', data: matches });
   });
 
-  app.get('/api/tkgm/parsel/:mahalleId/:ada/:parsel', (req, res) => {
+  // Query parcel by Ada and Parsel (Tries Live TKGM/IBB Gateway first, falls back gracefully)
+  app.get('/api/tkgm/parsel/:mahalleId/:ada/:parsel', async (req, res) => {
     const mahalleId = Number(req.params.mahalleId);
     const ada = String(req.params.ada || '124').trim();
     const parsel = String(req.params.parsel || '8').trim();
@@ -456,11 +576,27 @@ async function startServer() {
       return;
     }
 
-    const feature = generateCadastralParcelFeature(mahalleId, ada, parsel);
-    res.json({ status: 'ok', feature });
+    const mahalle = MAHALLELER.find((m) => m.id === mahalleId);
+    const ilce = mahalle ? ILCELER.find((c) => c.id === mahalle.parentId) : undefined;
+
+    // 1. Try Live IBB / MEGSIS / TAKBIS Gateway
+    try {
+      const liveFeature = await queryLiveIbbParcelByAdaParsel(ada, parsel, ilce?.text);
+      if (liveFeature) {
+        res.json({ status: 'ok', feature: liveFeature, source: 'live' });
+        return;
+      }
+    } catch (e) {
+      console.warn('Live parcel query failed, falling back to cadastral simulation:', e);
+    }
+
+    // 2. High-fidelity Realistic Cadastral Fallback
+    const feature = generateRealisticCadastralParcelFeature(mahalleId, ada, parsel);
+    res.json({ status: 'ok', feature, source: 'fallback' });
   });
 
-  app.get('/api/tkgm/koordinat', (req, res) => {
+  // Query parcel by coordinate (Tries Live TKGM/IBB Gateway first, falls back gracefully)
+  app.get('/api/tkgm/koordinat', async (req, res) => {
     const lat = parseFloat(String(req.query.lat));
     const lng = parseFloat(String(req.query.lng));
 
@@ -469,6 +605,18 @@ async function startServer() {
       return;
     }
 
+    // 1. Try Live IBB / MEGSIS / TAKBIS Gateway
+    try {
+      const liveFeature = await queryLiveIbbParcelByCoordinate(lat, lng);
+      if (liveFeature) {
+        res.json({ status: 'ok', feature: liveFeature, source: 'live' });
+        return;
+      }
+    } catch (e) {
+      console.warn('Live coordinate query failed, falling back to cadastral simulation:', e);
+    }
+
+    // 2. High-fidelity Realistic Cadastral Fallback
     let nearestMahalle = MAHALLELER[0];
     let minDistance = Infinity;
     for (const m of MAHALLELER) {
@@ -485,8 +633,8 @@ async function startServer() {
     const ada = String(100 + (seed % 900));
     const parsel = String(1 + (seed % 45));
 
-    const feature = generateCadastralParcelFeature(nearestMahalle.id, ada, parsel, lat, lng);
-    res.json({ status: 'ok', feature });
+    const feature = generateRealisticCadastralParcelFeature(nearestMahalle.id, ada, parsel, lat, lng);
+    res.json({ status: 'ok', feature, source: 'fallback' });
   });
 
   if (process.env.NODE_ENV !== 'production') {
